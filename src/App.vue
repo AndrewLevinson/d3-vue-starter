@@ -2,20 +2,18 @@
   <div id="app">
     <div id="charts">
       <line-chart :msg="$store.state.msg"/>
-      <chart2 :msg="$store.state.msg"/>
+      <line-chart :msg="$store.state.msg"/>
     </div>
   </div>
 </template>
 
 <script>
 import LineChart from "./components/LineChart.vue";
-import Chart2 from "./components/Chart2.vue";
 
 export default {
   name: "app",
   components: {
-    LineChart,
-    Chart2
+    LineChart
   },
   data() {
     return {
@@ -68,7 +66,7 @@ div.tooltip {
 #charts {
   display: flex;
   justify-content: space-between;
-  margin-left: 5rem;
+  margin-left: 3%;
 }
 
 /* axis formatting */

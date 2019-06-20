@@ -83,7 +83,7 @@ export default {
       chartTitle: "Starter Chart with D3 and Vue.js",
       yLabel: "Y Label",
       svgWidth: window.innerWidth * 0.45,
-      svgHeight: window.innerHeight * 0.75,
+      svgHeight: window.innerHeight * 0.725,
       margin: { top: 50, left: 65, bottom: 20, right: 25 },
       data: [{}],
       stackedData: null,
