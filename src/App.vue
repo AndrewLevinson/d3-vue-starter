@@ -1,16 +1,21 @@
 <template>
   <div id="app">
-    <line-chart :msg="$store.state.msg"/>
+    <div id="charts">
+      <line-chart :msg="$store.state.msg"/>
+      <chart2 :msg="$store.state.msg"/>
+    </div>
   </div>
 </template>
 
 <script>
 import LineChart from "./components/LineChart.vue";
+import Chart2 from "./components/Chart2.vue";
 
 export default {
   name: "app",
   components: {
-    LineChart
+    LineChart,
+    Chart2
   },
   data() {
     return {
@@ -59,6 +64,13 @@ div.tooltip {
   filter: drop-shadow(0px 2px 8px rgba(59, 59, 61, 0.4));
   z-index: 1;
 }
+
+#charts {
+  display: flex;
+  justify-content: space-between;
+  margin-left: 5rem;
+}
+
 /* axis formatting */
 .gridlines .domain {
   display: none;
