@@ -5,26 +5,9 @@
       <option disabled selected>Please select one</option>
       <option v-for="heads in headers" :key="heads" :value="heads">{{ heads }}</option>
     </select>
-    <div class="stats">
-      <div class="stat">
-        <p>
-          Count:
-          <span>{{ count}}</span>
-        </p>
-      </div>
-      <div class="stat">
-        <p>
-          Min:
-          <span>{{ min }}</span>
-        </p>
-      </div>
-      <div class="stat">
-        <p>
-          Max:
-          <span>{{ max }}</span>
-        </p>
-      </div>
-    </div>
+
+    <Stats :filteredData="filteredData" :lineVariable="lineVariable"/>
+
     <svg :width="svgWidth" :height="svgHeight">
       <g :transform="`translate(${margin.left}, ${margin.bottom})`" class="the-group">
         <g v-axis:x="scale" :transform="`translate(${0}, ${height})`" class="x-axis"></g>
@@ -74,10 +57,12 @@
 
 <script>
 import * as d3 from "d3";
-import { wh, stats } from "../mixins/myMixin.js";
+import { wh, axis, grid, scale } from "../mixins/myMixin.js";
+import Stats from "./Stats.vue";
 
 export default {
   name: "chart-one",
+  components: { Stats },
   data() {
     return {
       chartTitle: "Starter Chart with D3 and Vue.js",
@@ -126,7 +111,7 @@ export default {
       setShown: 1
     };
   },
-  mixins: [wh, stats],
+  mixins: [axis, grid, wh, scale],
   computed: {
     filteredData() {
       // return this.data.filter(d => d.set === this.setShown);
@@ -134,42 +119,6 @@ export default {
     },
     headers() {
       return d3.keys(this.data[0]);
-    },
-    scale() {
-      // this.domain.x.min = Math.min(...this.filteredData.map(x => x.year));
-      // this.domain.x.max = Math.max(...this.filteredData.map(x => x.year));
-
-      const x = d3
-        .scaleLinear()
-        .domain([
-          Math.min(...this.filteredData.map(x => x.year)),
-          Math.max(...this.filteredData.map(x => x.year))
-        ])
-        // https://github.com/d3/d3-scale/blob/master/README.md#band_rangeRound
-        .rangeRound([0, this.width]);
-      // .paddingInner(1);
-      const y = d3
-        .scaleLinear()
-        // .domain([this.domain.y.min, this.domain.y.max])
-        .domain([
-          Math.min(...this.filteredData.map(y => y[this.lineVariable])),
-          Math.max(...this.filteredData.map(y => y[this.lineVariable]))
-        ])
-        .rangeRound([this.height, 0]);
-
-      const gridLine = d3
-        .scaleLinear()
-        // .domain([this.domain.y.min, this.domain.y.max])
-        .domain([
-          Math.min(...this.filteredData.map(y => y.priceA)),
-          Math.max(...this.filteredData.map(y => y.priceA))
-        ])
-        .rangeRound([this.height, 0]);
-
-      this.scaled.x = x;
-      this.scaled.y = y;
-
-      return { x, y, gridLine };
     }
   },
   created() {
@@ -456,33 +405,6 @@ export default {
         this.tooltip.hide();
       }
     }
-  },
-  directives: {
-    axis(el, binding) {
-      const axis = binding.arg; // x or y
-      const axisMethod = { x: "axisBottom", y: "axisLeft" }[axis];
-      // The line below assigns the x or y function of the scale object
-      const methodArg = binding.value[axis];
-      // d3.axisBottom(scale.x)
-      d3.select(el).call(
-        d3[axisMethod](methodArg)
-          .tickFormat(d3.format(binding.arg === "x" ? "d" : ",d"))
-          .ticks(binding.arg === "x" ? 10 : 5)
-      );
-    },
-    grid(el, binding) {
-      const axis = binding.arg; // x or y
-      const axisMethod = { gridLine: "axisLeft" }[axis];
-      // The line below assigns the x or y function of the scale object
-      const methodArg = binding.value[axis];
-      // d3.axisBottom(scale.x)
-      d3.select(el).call(
-        d3[axisMethod](methodArg)
-          .tickFormat("")
-          .tickSize(-2000)
-          .ticks(5)
-      );
-    }
   }
 };
 </script>
@@ -495,15 +417,6 @@ export default {
 }
 .subtitle {
   margin-top: 3rem;
-}
-
-.stats {
-  display: flex;
-  margin-top: 2rem;
-}
-
-.stat {
-  margin-right: 3rem;
 }
 
 svg {
