@@ -31,6 +31,20 @@ export const stats = {
 };
 
 export const scale = {
+  data() {
+    return {
+      domain: {
+        x: {
+          min: 1985,
+          max: 2015
+        },
+        y: {
+          min: 0,
+          max: 100
+        }
+      }
+    };
+  },
   computed: {
     scale() {
       // this.domain.x.min = Math.min(...this.filteredData.map(x => x.year));
@@ -62,9 +76,6 @@ export const scale = {
           Math.max(...this.filteredData.map(y => y[this.lineVariable]))
         ])
         .rangeRound([this.height, 0]);
-
-      this.scaled.x = x;
-      this.scaled.y = y;
 
       return { x, y, gridLine };
     }
@@ -103,5 +114,63 @@ export const grid = {
           .ticks(5)
       );
     }
+  }
+};
+
+export const tooltip = {
+  data() {
+    return {
+      tooltip: {
+        element: null,
+        init: function() {
+          this.element = d3
+            .select("body")
+            .append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+        },
+        show: function(t) {
+          this.element
+            .html(t)
+            .transition()
+            .duration(200)
+            .style(
+              "left",
+              `${
+                event.clientX > window.innerWidth * 0.5
+                  ? event.clientX - this.element._groups[0][0].clientWidth - 10
+                  : event.clientX + 10
+              }px`
+            )
+            .style("top", `${event.clientY + 10}px`)
+            .style("opacity", 0.925);
+        },
+        move: function() {
+          this.element
+            .transition()
+            .duration(30)
+            .style(
+              "left",
+              `${
+                event.clientX > window.innerWidth * 0.5
+                  ? event.clientX - this.element._groups[0][0].clientWidth - 10
+                  : event.clientX + 10
+              }px`
+            )
+            .style("top", `${event.clientY + 10}px`)
+            .style("opacity", 0.925);
+        },
+        hide: function() {
+          this.element
+            .transition()
+            .duration(500)
+            .style("opacity", 0)
+            .delay(100);
+        }
+      }
+    };
+  },
+  mounted() {
+    this.tooltip.init();
   }
 };

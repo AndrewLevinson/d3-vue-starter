@@ -57,7 +57,7 @@
 
 <script>
 import * as d3 from "d3";
-import { wh, axis, grid, scale } from "../mixins/myMixin.js";
+import { wh, axis, grid, scale, tooltip } from "../mixins/myMixin.js";
 import Stats from "./Stats.vue";
 
 export default {
@@ -71,12 +71,8 @@ export default {
       svgHeight: window.innerHeight * 0.725,
       margin: { top: 50, left: 65, bottom: 20, right: 25 },
       data: [{}],
-      stackedData: null,
-      scaled: {
-        x: null,
-        y: null,
-        color: null
-      },
+      lineVariable: "priceA",
+      setShown: 1,
       paths: {
         line: "",
         areaOne: "",
@@ -89,29 +85,15 @@ export default {
       pointsLine: [],
       pointsArea: [[], [], [], [], []],
       lastHoverPoint: {},
-      lineVariable: "priceA",
       showLabel: false,
       selected: null,
-      selectedArea: null,
       showCallOut: false,
-      myCount: null,
-      tooltip: null,
       showArea: false,
-      domain: {
-        x: {
-          min: 1985,
-          max: 2015
-        },
-        y: {
-          min: 0,
-          max: 100
-        }
-      },
-      stackKeys: ["gpc", "spc", "dpc"],
-      setShown: 1
+      stackedData: null,
+      stackKeys: ["gpc", "spc", "dpc"]
     };
   },
-  mixins: [axis, grid, wh, scale],
+  mixins: [axis, grid, wh, scale, tooltip],
   computed: {
     filteredData() {
       // return this.data.filter(d => d.set === this.setShown);
@@ -124,11 +106,8 @@ export default {
   created() {
     this.loadData();
   },
-  mounted() {
-    this.initTooltip();
-  },
+
   updated() {
-    // console.log("im updated");
     this.updatePath();
   },
   methods: {
@@ -172,8 +151,8 @@ export default {
       // line
       for (const d of this.filteredData) {
         this.pointsLine.push({
-          x: this.scaled.x(d.year),
-          y: this.scaled.y(d[this.lineVariable]),
+          x: this.scale.x(d.year),
+          y: this.scale.y(d[this.lineVariable]),
           max: this.height
         });
       }
@@ -191,9 +170,9 @@ export default {
       for (let i = 0; i < this.stackedData.length; i++) {
         for (const d of this.stackedData[i]) {
           this.pointsArea[i].push({
-            x: this.scaled.x(d.data.year),
-            first: this.scaled.y(d[0]),
-            second: this.scaled.y(d[1]),
+            x: this.scale.x(d.data.year),
+            first: this.scale.y(d[0]),
+            second: this.scale.y(d[1]),
             max: this.height
           });
         }
@@ -235,170 +214,22 @@ export default {
     select(index) {
       this.selected = index;
     },
-    selectArea(index) {
-      this.selectedArea = index;
-    },
+
     numFormater(type, el) {
       const numFormatT = d3.format(",d");
       return numFormatT(el) + (type === "per" ? "%" : "");
-    },
-    initTooltip() {
-      this.tooltip = {
-        element: null,
-        init: function() {
-          this.element = d3
-            .select("body")
-            .append("div")
-            .attr("class", "tooltip")
-            .style("opacity", 0);
-        },
-        show: function(t) {
-          this.element
-            .html(t)
-            .transition()
-            .duration(200)
-            .style(
-              "left",
-              `${
-                event.clientX > window.innerWidth * 0.5
-                  ? event.clientX - 250
-                  : event.clientX + 10
-              }px`
-            )
-            .style("top", `50vh`)
-            .style("opacity", 0.925);
-        },
-        move: function() {
-          this.element
-            .transition()
-            .duration(30)
-            .style("left", `${event.clientX + 10}px`)
-            .style("top", `50vh`)
-            .style("opacity", 0.9);
-        },
-        hide: function() {
-          this.element
-            .transition()
-            .duration(500)
-            .style("opacity", 0)
-            .delay(100);
-        }
-      };
-      this.tooltip.init();
     },
     myTooltip(d) {
       if (this.showLabel) {
         if (this.setShown === 1) {
           this.tooltip.show(`
-        <div class="tip-band"></div>
-        <h5 class="datum">${d.year}</h5>
-        <h6 class="sub-head-tip">Renewable Water Per Capita<br>(m3/year/person)</h6>
-          <div class="data-pair area-three tip-tag">
-            <span class="tag-intext">Dependencies</span>
-            <p class="tag-intext">
-              ${this.numFormater("num", d.dpc)}
-            </p>
-          </div>
-      
-          <div class="data-pair area-two tip-tag">
-            <span class="tag-intext">Surface Water</span>
-            <p class="tag-intext">
-              ${this.numFormater("num", d.spc)}
-            </p>
-          </div>
-
-          <div class="data-pair area-one tip-tag">
-            <span class="tag-intext">Groundwater</span>
-            <p class="tag-intext">
-              ${this.numFormater("num", d.gpc)}
-            </p>
-          </div>
-
-       
-          <div class="data-pair tip-tag">
-            <span class="datum total">Total</span>
-            <p class="total">
-              ${this.numFormater("num", d.rwpc)}
-            </p>
-          </div>
+        <div><p>I'm a tooltip! Shown if set 1 is true</div>
+        <p>My properties are: ${d3.keys(d)}</p>
         `);
         } else if (this.setShown === 2) {
           this.tooltip.show(`
-        <div class="tip-band"></div>
-        <h5 class="datum">${d.year}</h5>
-        <h6 class="sub-head-tip">Percentage of Water Withdrawls</h6>
-
-          <div class="data-pair area-five-100 tip-tag">
-            <span class="tag-intext">Other</span>
-            <p class="tag-intext">
-            ${this.numFormater("per", d.otherPer)}
-            </p>
-          </div>
-
-
-          <div class="data-pair area-four-100 tip-tag">
-            <span class="tag-intext">Industrial</span>
-            <p class="tag-intext">
-              ${this.numFormater("per", d.industrialPer)}
-            </p>
-          </div>
-
-          <div class="data-pair area-three-100 tip-tag">
-            <span class="tag-intext">Municipal</span>
-            <p class="tag-intext">
-              ${this.numFormater("per", d.publicPer)}
-            </p>
-          </div>
-
-          <div class="data-pair area-two-100 tip-tag">
-            <span class="tag-intext">Irrigation</span>
-            <p class="tag-intext">
-              ${this.numFormater("per", d.irrigationPer)}
-            </p>
-          </div>
-
-       <div class="data-pair area-one-100 tip-tag">
-            <span class="tag-intext">Thermoelectric</span>
-            <p class="tag-intext">
-              ${this.numFormater("per", d.thermoPer)}
-            </p>
-          </div>
-         `);
-        } else if (this.setShown === 3) {
-          this.tooltip.show(`
-        <div class="tip-band"></div>
-        <h5 class="datum">${d.year}</h5>
-        <h6 class="sub-head-tip">Percentage of Water Withdrawls</h6>
-
-          <div class="data-pair area-five-100 tip-tag">
-            <span class="tag-intext">Other</span>
-            <p class="tag-intext">
-            ${this.numFormater("per", d.otherPer)}
-            </p>
-          </div>
-
-
-          <div class="data-pair area-four-100 tip-tag">
-            <span class="tag-intext">Industrial</span>
-            <p class="tag-intext">
-              ${this.numFormater("per", d.industrialPer)}
-            </p>
-          </div>
-
-          <div class="data-pair area-three-100 tip-tag">
-            <span class="tag-intext">Municipal</span>
-            <p class="tag-intext">
-              ${this.numFormater("per", d.publicPer)}
-            </p>
-          </div>
-
-          <div class="data-pair area-two-100 tip-tag">
-            <span class="tag-intext">Irrigation</span>
-            <p class="tag-intext">
-              ${this.numFormater("per", d.irrigationPer)}
-            </p>
-          </div>
-
+        <div><p>I'm a tooltip! Shown if set 2 is true</div>
+        <p>My properties are: ${d3.keys(d)}</p>
          `);
         }
       } else if (!this.showLabel) {
