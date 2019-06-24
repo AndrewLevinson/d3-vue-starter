@@ -17,7 +17,12 @@
           @mousemove="mouseoverArea"
           @mouseleave="showLabel = false, myTooltip()"
         >
-          <path v-for="(path, index) in paths" :key="index" :class="index" :d="path"></path>
+          <path
+            v-for="(path, index) in paths"
+            :key="index"
+            :class="[index === 'selector' && !showLabel ? 'selector-inactive' : index]"
+            :d="path"
+          ></path>
         </g>
 
         <text y="5.5" x="0" class="axis-title">{{ yLabel }}</text>
@@ -40,8 +45,14 @@ export default {
       yLabel: "Y Label",
       svgWidth: window.innerWidth * 0.45,
       svgHeight: window.innerHeight * 0.7,
-      margin: { top: 50, left: 65, bottom: 20, right: 25 },
+      margin: { top: 50, left: 65, bottom: 20, right: 0 },
       data: [{}],
+      domain: {
+        y: {
+          min: 0,
+          max: 300
+        }
+      },
       setShown: 1,
       paths: {
         areaOne: "",
@@ -100,7 +111,8 @@ export default {
       .area()
       .x(d => d.x)
       .y0(d => d.first)
-      .y1(d => d.second),
+      .y1(d => d.second)
+      .curve(d3.curveMonotoneX),
     createValueSelector: d3
       .area()
       .x(d => d.x)
@@ -171,7 +183,7 @@ export default {
       if (this.showLabel) {
         if (this.setShown === 1) {
           this.tooltip.show(`
-        <div><p>I'm a tooltip! Shown if set 1 is true</div>
+        <div><p>I'm a tooltip for ${d.year}! Shown if set 1 is true</div>
         <p>My properties are: ${d3.keys(d)}</p>
         `);
         } else if (this.setShown === 2) {

@@ -57,6 +57,16 @@ export default {
       svgHeight: window.innerHeight * 0.7,
       margin: { top: 50, left: 65, bottom: 20, right: 25 },
       data: [{}],
+      domain: {
+        x: {
+          min: null,
+          max: null
+        },
+        y: {
+          min: 0,
+          max: 100
+        }
+      },
       lineVariable: "priceA",
       setShown: 1,
       paths: {
@@ -83,7 +93,6 @@ export default {
   created() {
     this.loadData();
   },
-
   updated() {
     this.updatePath();
   },
@@ -114,7 +123,6 @@ export default {
     updatePath() {
       // reset line points
       this.pointsLine = [];
-
       // line
       for (const d of this.filteredData) {
         this.pointsLine.push({
@@ -137,7 +145,7 @@ export default {
       if (this.showLabel) {
         if (this.setShown === 1) {
           this.tooltip.show(`
-        <div><p>I'm a tooltip! Shown if set 1 is true</div>
+        <div><p>I'm a tooltip for ${d.year}! Shown if set 1 is true</div>
         <p>My properties are: ${d3.keys(d)}</p>
         `);
         } else if (this.setShown === 2) {

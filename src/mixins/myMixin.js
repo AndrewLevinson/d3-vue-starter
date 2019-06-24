@@ -35,23 +35,27 @@ export const scale = {
     return {
       domain: {
         x: {
-          min: 1985,
-          max: 2015
+          min: null,
+          max: null
         },
         y: {
-          min: 0,
-          max: 100
+          min: null,
+          max: null
         }
       }
     };
   },
   computed: {
     scale() {
+      // examples here show how to tie computed scale to local domain object in data or to calculate min/max based on filtered data set
+      // override domain object in component
+
       // this.domain.x.min = Math.min(...this.filteredData.map(x => x.year));
-      // this.domain.x.max = Math.max(...this.filteredData.map(x => x.year));
+      // this.domain.y.min = Math.min(...this.filteredData.map(y => y[this.lineVariable]));
 
       const x = d3
         .scaleLinear()
+        // .domain([this.domain.x.min, this.domain.x.max])
         .domain([
           Math.min(...this.filteredData.map(x => x.year)),
           Math.max(...this.filteredData.map(x => x.year))
@@ -61,20 +65,12 @@ export const scale = {
       // .paddingInner(1);
       const y = d3
         .scaleLinear()
-        // .domain([this.domain.y.min, this.domain.y.max])
-        .domain([
-          0,
-          Math.max(...this.filteredData.map(y => y[this.lineVariable]))
-        ])
+        .domain([this.domain.y.min, this.domain.y.max])
         .rangeRound([this.height, 0]);
 
       const gridLine = d3
         .scaleLinear()
-        // .domain([this.domain.y.min, this.domain.y.max])
-        .domain([
-          Math.min(...this.filteredData.map(y => y[this.lineVariable])),
-          Math.max(...this.filteredData.map(y => y[this.lineVariable]))
-        ])
+        .domain([this.domain.y.min, this.domain.y.max])
         .rangeRound([this.height, 0]);
 
       return { x, y, gridLine };
