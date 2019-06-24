@@ -1,19 +1,22 @@
 <template>
   <div id="app">
+    <h3 id="title">Starter Charts with D3 and Vue</h3>
     <div id="charts">
       <line-chart :msg="$store.state.msg"/>
-      <line-chart :msg="$store.state.msg"/>
+      <area-chart/>
     </div>
   </div>
 </template>
 
 <script>
 import LineChart from "./components/LineChart.vue";
+import AreaChart from "./components/AreaChart.vue";
 
 export default {
   name: "app",
   components: {
-    LineChart
+    LineChart,
+    AreaChart
   },
   data() {
     return {
@@ -63,10 +66,18 @@ div.tooltip {
   z-index: 1;
 }
 
+#title {
+  margin-bottom: 1rem;
+  padding-top: 2rem;
+}
+#app {
+  width: 95%;
+  margin: 0 auto;
+}
+
 #charts {
   display: flex;
   justify-content: space-between;
-  margin-left: 3%;
 }
 
 /* axis formatting */

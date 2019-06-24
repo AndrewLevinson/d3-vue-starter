@@ -39,7 +39,7 @@ export default {
 <style scoped>
 .stats {
   display: flex;
-  margin-top: 2rem;
+  margin-top: 1rem;
 }
 
 .stat {

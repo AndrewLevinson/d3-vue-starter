@@ -6,35 +6,20 @@
       <option v-for="heads in headers" :key="heads" :value="heads">{{ heads }}</option>
     </select>
     <Stats :filteredData="filteredData" :lineVariable="lineVariable"/>
+
     <svg :width="svgWidth" :height="svgHeight">
       <g :transform="`translate(${margin.left}, ${margin.bottom})`" class="the-group">
         <g v-axis:x="scale" :transform="`translate(${0}, ${height})`" class="x-axis"></g>
         <g v-axis:y="scale" class="y-axis"></g>
         <g v-grid:gridLine="scale" class="grid"></g>
-        <path
-          :class="[showCallOut && setShown === 1 ? 'link-inactive' : (setShown === 1 ? 'link' : 'link-hide')]"
-          :d="paths.line"
-        ></path>
-        <g v-for="(d, i) in filteredData" :key="i">
-          <line
-            v-if="setShown === 1"
-            :x1="scale.x(d.year)"
-            :y1="scale.y(d.priceB)"
-            :x2="scale.x(d.year)"
-            :y2="height"
-            :class="[i === selected ? 'selector' : 'selector-inactive']"
-          ></line>
-          <circle
-            v-if="setShown === 1"
-            :class="[i === selected ? 'circle-active' : (showCallOut ? 'circle-inactive' : 'circle-up')]"
-            :cx="scale.x(d.year)"
-            :cy="scale.y(d[lineVariable])"
-            r="5"
-            @mouseover="showLabel = !showLabel,
-            myTooltip(d),select(i)"
-            @mouseleave="showLabel = !showLabel, myTooltip(d), select(null)"
-          ></circle>
+        <g
+          class="area-active"
+          @mousemove="mouseoverArea"
+          @mouseleave="showLabel = false, myTooltip()"
+        >
+          <path v-for="(path, index) in paths" :key="index" :class="index" :d="path"></path>
         </g>
+
         <text y="5.5" x="0" class="axis-title">{{ yLabel }}</text>
       </g>
     </svg>
@@ -47,27 +32,32 @@ import { wh, axis, grid, scale, tooltip } from "../mixins/myMixin.js";
 import Stats from "./Stats.vue";
 
 export default {
-  name: "line-chart",
+  name: "area-chart",
   components: { Stats },
   data() {
     return {
-      chartTitle: "Line Chart",
+      chartTitle: "Stacked Area Chart",
       yLabel: "Y Label",
       svgWidth: window.innerWidth * 0.45,
       svgHeight: window.innerHeight * 0.7,
       margin: { top: 50, left: 65, bottom: 20, right: 25 },
       data: [{}],
-      lineVariable: "priceA",
       setShown: 1,
       paths: {
-        line: "",
+        areaOne: "",
+        areaTwo: "",
+        areaThree: "",
+        areaFour: "",
+        areaFive: "",
         selector: ""
       },
-      pointsLine: [],
+      lineVariable: "priceA",
+      pointsArea: [[], [], [], [], []],
       lastHoverPoint: {},
       showLabel: false,
       selected: null,
-      showCallOut: false
+      stackedData: null,
+      stackKeys: ["priceA", "priceB", "priceC"]
     };
   },
   mixins: [axis, grid, wh, scale, tooltip],
@@ -106,25 +96,69 @@ export default {
           this.updatePath();
         });
     },
-    createLine: d3
-      .line()
+    createArea: d3
+      .area()
       .x(d => d.x)
-      .y(d => d.y)
-      .curve(d3.curveMonotoneX),
+      .y0(d => d.first)
+      .y1(d => d.second),
+    createValueSelector: d3
+      .area()
+      .x(d => d.x)
+      .y0(d => d.max)
+      .y1(0),
     updatePath() {
-      // reset line points
-      this.pointsLine = [];
+      // reset area points
+      this.pointsArea = [[], [], [], [], []];
 
-      // line
-      for (const d of this.filteredData) {
-        this.pointsLine.push({
-          x: this.scale.x(d.year),
-          y: this.scale.y(d[this.lineVariable]),
-          max: this.height
-        });
+      // stack area
+      const stack = d3.stack();
+      stack.keys(this.stackKeys);
+      this.stackedData = stack(this.filteredData);
+
+      // all areas points loop
+      for (let i = 0; i < this.stackedData.length; i++) {
+        for (const d of this.stackedData[i]) {
+          this.pointsArea[i].push({
+            x: this.scale.x(d.data.year),
+            first: this.scale.y(d[0]),
+            second: this.scale.y(d[1]),
+            max: this.height
+          });
+        }
       }
-      this.paths.line = this.createLine(this.pointsLine);
+      // add create area from points
+      this.paths.areaOne = this.createArea(this.pointsArea[0]);
+      this.paths.areaTwo = this.createArea(this.pointsArea[1]);
+      this.paths.areaThree = this.createArea(this.pointsArea[2]);
+      // this.paths.areaFour = this.createArea(this.pointsArea[3]);
+      // this.paths.areaFive = this.createArea(this.pointsArea[4]);
     },
+    mouseoverArea({ offsetX }) {
+      this.showLabel = true;
+
+      const x = offsetX - this.margin.left;
+      const closestPoint = this.getClosestPoint(x);
+      if (this.lastHoverPoint.index !== closestPoint.index) {
+        const point = this.pointsArea[1][closestPoint.index];
+        this.paths.selector = this.createValueSelector([point]);
+        this.$emit(
+          "mouseOver",
+          this.myTooltip(this.filteredData[closestPoint.index])
+        );
+
+        this.lastHoverPoint = closestPoint;
+      }
+    },
+    getClosestPoint(x) {
+      return this.pointsArea[1]
+        .map((point, index) => ({
+          x: point.x,
+          diff: Math.abs(point.x - x),
+          index
+        }))
+        .reduce((memo, val) => (memo.diff < val.diff ? memo : val));
+    },
+
     select(index) {
       this.selected = index;
     },
@@ -157,7 +191,7 @@ export default {
 <style scoped>
 /* chart */
 #chart {
-  margin-right: 3rem;
+  margin-right: 1rem;
 }
 .subtitle {
   margin-bottom: 0.75rem;
@@ -168,17 +202,6 @@ svg {
   margin-top: 0rem;
   box-shadow: 0px 3px 8px 0px rgba(0, 0, 0, 0.3);
   border-radius: 8px;
-}
-/* legend */
-.legend-hidden {
-  opacity: 0;
-}
-
-.legend {
-  justify-content: space-between;
-  padding-bottom: 0.5rem;
-  margin-top: -0.5rem;
-  font-size: 1.4rem;
 }
 
 /* chart elements */
@@ -192,37 +215,9 @@ line {
   transition: all 0.7s ease-in-out;
 }
 
-.circle-up {
-  fill: #fff;
-  stroke: #000;
-  opacity: 1;
-  transition: all 0.7s ease-in-out;
-}
-.circle-inactive {
-  fill: #fff;
-  stroke: #000;
-  opacity: 0.3;
-  transition: all 0.7s ease-in-out;
-}
-
-.circle-active {
-  fill: var(--special);
-  stroke: #000;
-  opacity: 1;
-  transition: all 0.7s ease-in-out;
-
-  -webkit-animation: pulsing 1.5s infinite ease-in-out;
-  -moz-animation: pulsing 1.5s infinite ease-in-out;
-  animation: pulsing 1.5s infinite ease-in-out;
-}
-
-circle:hover {
-  cursor: pointer;
-}
-
 .selector {
-  stroke: var(--main-body-type);
-  /* stroke: var(--special); */
+  /* stroke: var(--main-body-type); */
+  stroke: black;
   stroke-width: 3px;
   stroke-dasharray: 2;
   fill: none;
@@ -231,7 +226,8 @@ circle:hover {
 }
 
 .selector-inactive {
-  stroke: var(--main-body-type);
+  /* stroke: var(--main-body-type); */
+  stroke: black;
   stroke-width: 1px;
   stroke-dasharray: 2;
   fill: none;
@@ -258,5 +254,31 @@ circle:hover {
 .link-hide {
   opacity: 0;
   transition: all 0.7s ease-in-out;
+}
+
+.area-active {
+  /* opacity: 1; */
+  opacity: 0.8;
+  transition: all 0.7s ease-in-out;
+}
+.area-active:hover {
+  cursor: crosshair;
+}
+.area-hide {
+  opacity: 0;
+  transition: all 0.7s ease-in-out;
+}
+
+/* areas */
+.areaOne {
+  fill: lightcoral;
+}
+
+.areaTwo {
+  fill: lightcyan;
+}
+
+.areaThree {
+  fill: lightgreen;
 }
 </style>

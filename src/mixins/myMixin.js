@@ -63,7 +63,7 @@ export const scale = {
         .scaleLinear()
         // .domain([this.domain.y.min, this.domain.y.max])
         .domain([
-          Math.min(...this.filteredData.map(y => y[this.lineVariable])),
+          0,
           Math.max(...this.filteredData.map(y => y[this.lineVariable]))
         ])
         .rangeRound([this.height, 0]);

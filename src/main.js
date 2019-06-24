@@ -3,7 +3,7 @@ import App from "./App.vue";
 import "normalize.css";
 import "./assets/css/default.css";
 import "./assets/css/typography.css";
-import store from "./store";
+import store from "./store.js";
 
 Vue.config.productionTip = false;
 
