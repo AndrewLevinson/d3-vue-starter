@@ -1,7 +1,7 @@
 <template>
   <div id="chart">
     <h5 class="subtitle">{{ chartTitle }}</h5>
-    <select v-model="lineVariable">
+    <select v-model="lineVariable" @change="setDomain()">
       <option disabled selected>Please select one</option>
       <option v-for="heads in headers" :key="heads" :value="heads">{{ heads }}</option>
     </select>
@@ -132,6 +132,13 @@ export default {
         });
       }
       this.paths.line = this.createLine(this.pointsLine);
+    },
+    setDomain() {
+      this.domain.y.max = Math.max(
+        ...this.filteredData.map(x => x[this.lineVariable])
+      );
+
+      // this.$set(this.domain.y, "max", Math.random() * 500);
     },
     select(index) {
       this.selected = index;

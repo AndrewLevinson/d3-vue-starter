@@ -52,10 +52,8 @@ div.tooltip {
   position: fixed;
   max-width: 350px;
   text-align: left;
-  /* display: inline; */
   padding: 10px;
   font-size: 1.5rem;
-  /* font-size: 1rem; */
   line-height: 1.2;
   background-color: #fff;
   border: 0px;
