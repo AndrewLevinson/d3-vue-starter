@@ -5,16 +5,16 @@
       <option disabled selected>Please select one</option>
       <option v-for="heads in headers" :key="heads" :value="heads">{{ heads }}</option>
     </select>
-    <Stats :filteredData="filteredData" :lineVariable="lineVariable"/>
+    <Stats :filteredData="filteredData" :lineVariable="lineVariable" />
     <svg :width="svgWidth" :height="svgHeight">
       <g :transform="`translate(${margin.left}, ${margin.bottom})`" class="the-group">
-        <g v-axis:x="scale" :transform="`translate(${0}, ${height})`" class="x-axis"></g>
-        <g v-axis:y="scale" class="y-axis"></g>
-        <g v-grid:gridLine="scale" class="grid"></g>
+        <g v-axis:x="scale" :transform="`translate(${0}, ${height})`" class="x-axis" />
+        <g v-axis:y="scale" class="y-axis" />
+        <g v-grid:gridLine="scale" class="grid" />
         <path
           :class="[showCallOut && setShown === 1 ? 'link-inactive' : (setShown === 1 ? 'link' : 'link-hide')]"
           :d="paths.line"
-        ></path>
+        />
         <g v-for="(d, i) in filteredData" :key="i">
           <line
             v-if="setShown === 1"
@@ -23,7 +23,7 @@
             :x2="scale.x(d.year)"
             :y2="height"
             :class="[i === selected ? 'selector' : 'selector-inactive']"
-          ></line>
+          />
           <circle
             v-if="setShown === 1"
             :class="[i === selected ? 'circle-active' : (showCallOut ? 'circle-inactive' : 'circle-up')]"
@@ -33,7 +33,7 @@
             @mouseover="showLabel = !showLabel,
             myTooltip(d),select(i)"
             @mouseleave="showLabel = !showLabel, myTooltip(d), select(null)"
-          ></circle>
+          />
         </g>
         <text y="5.5" x="0" class="axis-title">{{ yLabel }}</text>
       </g>
@@ -43,15 +43,22 @@
 
 <script>
 import * as d3 from "d3";
-import { wh, axis, grid, scale, tooltip } from "../mixins/myMixin.js";
+import {
+  wh,
+  resizeListener,
+  axis,
+  grid,
+  scale,
+  tooltip
+} from "../mixins/myMixin.js";
 import Stats from "./Stats.vue";
 
 export default {
   name: "line-chart",
+  props: { chartTitle: String },
   components: { Stats },
   data() {
     return {
-      chartTitle: "Line Chart",
       yLabel: "Y Label",
       svgWidth: window.innerWidth * 0.45,
       svgHeight: window.innerHeight * 0.7,
@@ -80,7 +87,7 @@ export default {
       showCallOut: false
     };
   },
-  mixins: [axis, grid, wh, scale, tooltip],
+  mixins: [axis, grid, wh, resizeListener, scale, tooltip],
   computed: {
     filteredData() {
       // return this.data.filter(d => d.set === this.setShown);
@@ -92,6 +99,9 @@ export default {
   },
   created() {
     this.loadData();
+  },
+  mounted() {
+    // this.resizeListener();
   },
   updated() {
     this.updatePath();

@@ -2,8 +2,8 @@
   <div id="app">
     <h3 id="title">Starter Charts with D3 and Vue</h3>
     <div id="charts">
-      <line-chart :msg="$store.state.msg"/>
-      <area-chart/>
+      <line-chart chartTitle="Line Chart" />
+      <area-chart chartTitle="Area Chart" />
     </div>
   </div>
 </template>

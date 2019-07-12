@@ -10,6 +10,25 @@ export const wh = {
     }
   }
 };
+
+export const resizeListener = {
+  mounted() {
+    this.resizeListener();
+  },
+  methods: {
+    resizeListener() {
+      // redraw the chart 300ms after the window has been resized
+      window.addEventListener("resize", () => {
+        // this.$data.redrawToggle = false;
+        setTimeout(() => {
+          // this.$data.redrawToggle = true;
+          this.svgWidth = window.innerWidth * 0.45;
+          // this.AnimateLoad();
+        }, 350);
+      });
+    }
+  }
+};
 export const stats = {
   computed: {
     count() {

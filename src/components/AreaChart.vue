@@ -5,13 +5,13 @@
       <option disabled selected>Please select one</option>
       <option v-for="heads in headers" :key="heads" :value="heads">{{ heads }}</option>
     </select>
-    <Stats :filteredData="filteredData" :lineVariable="lineVariable"/>
+    <Stats :filteredData="filteredData" :lineVariable="lineVariable" />
 
     <svg :width="svgWidth" :height="svgHeight">
       <g :transform="`translate(${margin.left}, ${margin.bottom})`" class="the-group">
-        <g v-axis:x="scale" :transform="`translate(${0}, ${height})`" class="x-axis"></g>
-        <g v-axis:y="scale" class="y-axis"></g>
-        <g v-grid:gridLine="scale" class="grid"></g>
+        <g v-axis:x="scale" :transform="`translate(${0}, ${height})`" class="x-axis" />
+        <g v-axis:y="scale" class="y-axis" />
+        <g v-grid:gridLine="scale" class="grid" />
         <g
           class="area-active"
           @mousemove="mouseoverArea"
@@ -22,7 +22,7 @@
             :key="index"
             :class="[index === 'selector' && !showLabel ? 'selector-inactive' : index]"
             :d="path"
-          ></path>
+          />
         </g>
 
         <text y="5.5" x="0" class="axis-title">{{ yLabel }}</text>
@@ -33,18 +33,26 @@
 
 <script>
 import * as d3 from "d3";
-import { wh, axis, grid, scale, tooltip } from "../mixins/myMixin.js";
+import {
+  wh,
+  resizeListener,
+  axis,
+  grid,
+  scale,
+  tooltip
+} from "../mixins/myMixin.js";
 import Stats from "./Stats.vue";
 
 export default {
   name: "area-chart",
+  props: { chartTitle: String },
   components: { Stats },
   data() {
     return {
-      chartTitle: "Stacked Area Chart",
       yLabel: "Y Label",
       svgWidth: window.innerWidth * 0.45,
       svgHeight: window.innerHeight * 0.7,
+      redrawToggle: true,
       margin: { top: 50, left: 65, bottom: 20, right: 0 },
       data: [{}],
       domain: {
@@ -71,7 +79,7 @@ export default {
       stackKeys: ["priceA", "priceB", "priceC"]
     };
   },
-  mixins: [axis, grid, wh, scale, tooltip],
+  mixins: [axis, grid, wh, resizeListener, scale, tooltip],
   computed: {
     filteredData() {
       // return this.data.filter(d => d.set === this.setShown);
@@ -84,7 +92,6 @@ export default {
   created() {
     this.loadData();
   },
-
   updated() {
     this.updatePath();
   },
@@ -104,7 +111,7 @@ export default {
           return (this.data = d);
         })
         .then(() => {
-          this.updatePath();
+          this.initialPath();
         });
     },
     createArea: d3
@@ -118,16 +125,38 @@ export default {
       .x(d => d.x)
       .y0(d => d.max)
       .y1(0),
-    updatePath() {
-      // reset area points
+    initialPath() {
+      // reset area points to be safe
       this.pointsArea = [[], [], [], [], []];
 
-      // stack area
+      // set stack area with d3 magic
       const stack = d3.stack();
       stack.keys(this.stackKeys);
       this.stackedData = stack(this.filteredData);
 
-      // all areas points loop
+      // add points across x axis at y = 0 to animate in
+      for (let i = 0; i < this.stackedData.length; i++) {
+        for (const d of this.stackedData[i]) {
+          this.pointsArea[i].push({
+            x: this.scale.x(d.data.year),
+            first: this.height,
+            second: this.height,
+            max: this.height
+          });
+        }
+      }
+      // create lines for all areas
+      this.paths.areaOne = this.createArea(this.pointsArea[0]);
+      this.paths.areaTwo = this.createArea(this.pointsArea[1]);
+      this.paths.areaThree = this.createArea(this.pointsArea[2]);
+
+      // set actual line points
+      this.updatePath();
+    },
+    updatePath() {
+      // reset points
+      this.pointsArea = [[], [], [], [], []];
+      // set actual line points at correct x and y
       for (let i = 0; i < this.stackedData.length; i++) {
         for (const d of this.stackedData[i]) {
           this.pointsArea[i].push({
@@ -138,12 +167,12 @@ export default {
           });
         }
       }
-      // add create area from points
-      this.paths.areaOne = this.createArea(this.pointsArea[0]);
-      this.paths.areaTwo = this.createArea(this.pointsArea[1]);
-      this.paths.areaThree = this.createArea(this.pointsArea[2]);
-      // this.paths.areaFour = this.createArea(this.pointsArea[3]);
-      // this.paths.areaFive = this.createArea(this.pointsArea[4]);
+      setTimeout(() => {
+        // rebuild lines with real points and let vue handle animation with setTimeout delay
+        this.paths.areaOne = this.createArea(this.pointsArea[0]);
+        this.paths.areaTwo = this.createArea(this.pointsArea[1]);
+        this.paths.areaThree = this.createArea(this.pointsArea[2]);
+      }, 100);
     },
     mouseoverArea({ offsetX }) {
       this.showLabel = true;
