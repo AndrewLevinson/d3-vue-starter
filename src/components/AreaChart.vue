@@ -93,7 +93,7 @@ export default {
     this.loadData();
   },
   updated() {
-    this.updatePath();
+    // this.updatePath();
   },
   methods: {
     loadData() {

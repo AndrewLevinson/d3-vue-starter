@@ -104,7 +104,7 @@ export default {
     // this.resizeListener();
   },
   updated() {
-    this.updatePath();
+    // this.updatePath();
   },
   methods: {
     loadData() {

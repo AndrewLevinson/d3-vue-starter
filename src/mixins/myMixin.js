@@ -24,6 +24,7 @@ export const resizeListener = {
           // this.$data.redrawToggle = true;
           this.svgWidth = window.innerWidth * 0.45;
           // this.AnimateLoad();
+          this.updatePath();
         }, 350);
       });
     }
